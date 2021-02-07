@@ -165,12 +165,16 @@ func ColumnNumberToName(num int) (string, error) {
 	if num > TotalColumns {
 		return "", fmt.Errorf("column number exceeds maximum limit")
 	}
-	var col string
+	col := make([]byte, 0, 4)
 	for num > 0 {
-		col = string(rune((num-1)%26+65)) + col
+		col = append(col, byte(65+(num-1)%26))
 		num = (num - 1) / 26
 	}
-	return col, nil
+	// reverse col
+	for i, j := 0, len(col)-1; i < j; i, j = i+1, j-1 {
+		col[i], col[j] = col[j], col[i]
+	}
+	return string(col), nil
 }
 
 // CellNameToCoordinates converts alphanumeric cell name to [X, Y] coordinates

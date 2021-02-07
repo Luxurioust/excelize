@@ -182,3 +182,11 @@ func ExcelDateToTime(excelDate float64, use1904Format bool) (time.Time, error) {
 	}
 	return timeFromExcelTime(excelDate, use1904Format), nil
 }
+
+// ExcelDateToTime converts a float-based excel date representation to a time.Time.
+func (f *File) ExcelDateToTime(excelDate float64) (time.Time, error) {
+	if excelDate < 0 {
+		return time.Time{}, newInvalidExcelDateError(excelDate)
+	}
+	return timeFromExcelTime(excelDate, f.WorkBook.WorkbookPr.Date1904), nil
+}
