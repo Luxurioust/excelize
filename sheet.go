@@ -588,14 +588,30 @@ func (f *File) CopySheet(from, to int) error {
 	if from < 0 || to < 0 || from == to || f.GetSheetName(from) == "" || f.GetSheetName(to) == "" {
 		return ErrSheetIdx
 	}
-	return f.copySheet(from, to)
+	return f.copySheet(f, from, to)
 }
 
-// copySheet provides a function to duplicate a worksheet by gave source and
-// target worksheet name.
-func (f *File) copySheet(from, to int) error {
-	fromSheet := f.GetSheetName(from)
-	sheet, err := f.workSheetReader(fromSheet)
+// CopySheetFrom provides a function to copy a worksheet from the given source
+// file and sheet to the target worksheet index. Note that currently this method
+// doesn't support copying workbooks that contain tables, charts, or pictures.
+//
+//    source := excelize.OpenFile("sample.xlsx")
+//    target := excelize.NewFile()
+//    index := target.NewSheet("Sheet2")
+//    err := target.CopySheetFrom(source, 1, index)
+//    return err
+func (f *File) CopySheetFrom(s *File, from, to int) error {
+	if from < 0 || to < 0 || from == to || s.GetSheetName(from) == "" || f.GetSheetName(to) == "" {
+		return ErrSheetIdx
+	}
+	return f.copySheet(s, from, to)
+}
+
+// copysheet provides a function to copy a worksheet from the given source file
+// and sheet and clones the content from this sheet to the given target sheet.
+func (f *File) copySheet(s *File, from, to int) error {
+	fromSheet := s.GetSheetName(from)
+	sheet, err := s.workSheetReader(fromSheet)
 	if err != nil {
 		return err
 	}
@@ -610,12 +626,12 @@ func (f *File) copySheet(from, to int) error {
 	worksheet.PageSetUp = nil
 	f.Sheet.Store(path, worksheet)
 	toRels := "xl/worksheets/_rels/sheet" + toSheetID + ".xml.rels"
-	fromRels := "xl/worksheets/_rels/sheet" + strconv.Itoa(f.getSheetID(fromSheet)) + ".xml.rels"
-	if rels, ok := f.Pkg.Load(fromRels); ok && rels != nil {
+	fromRels := "xl/worksheets/_rels/sheet" + strconv.Itoa(s.getSheetID(fromSheet)) + ".xml.rels"
+	if rels, ok := s.Pkg.Load(fromRels); ok && rels != nil {
 		f.Pkg.Store(toRels, rels.([]byte))
 	}
-	fromSheetXMLPath := f.sheetMap[trimSheetName(fromSheet)]
-	fromSheetAttr := f.xmlAttr[fromSheetXMLPath]
+	fromSheetXMLPath := s.sheetMap[trimSheetName(fromSheet)]
+	fromSheetAttr := s.xmlAttr[fromSheetXMLPath]
 	f.xmlAttr[path] = fromSheetAttr
 	return err
 }

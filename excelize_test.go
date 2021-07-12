@@ -957,7 +957,7 @@ func TestCopySheetError(t *testing.T) {
 		t.FailNow()
 	}
 
-	assert.EqualError(t, f.copySheet(-1, -2), "sheet  is not exist")
+	assert.EqualError(t, f.copySheet(f, -1, -2), "sheet  is not exist")
 	if !assert.EqualError(t, f.CopySheet(-1, -2), "invalid worksheet index") {
 		t.FailNow()
 	}
